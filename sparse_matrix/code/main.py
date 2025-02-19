@@ -5,28 +5,39 @@ import sys
 def perform_sparse_matrix_operations():
     input_directory = 'sparse_matrix/sample_input'
 
-    # Ensure the sample input directory exists
-    if not os.path.isdir(input_directory):
-        print(f"Error: Directory '{input_directory}' not found.")
-        sys.exit(1)
+    if not os.path.exists(input_directory):
+        raise RuntimeError(f"Path not found: {os.path.abspath(input_directory)}")
 
-    # Retrieve available matrix files
+    # Grabbing all the matrix files 
     matrix_files = [file for file in os.listdir(input_directory) if file.endswith('.txt')]
 
+    # Need at least TWO files
     if len(matrix_files) < 2:
         print("Error: At least two matrix files must be present.")
         sys.exit(1)
 
-    # Display matrix file options
+    # Load dimensions of all matrices
+    matrix_dimensions = {}
+    for file in matrix_files:
+        try:
+            matrix = SparseMatrix(file_path=os.path.join(input_directory, file))
+            matrix_dimensions[file] = matrix.get_dimensions()
+        except Exception as e:
+            print(f"Error loading {file}: {e}")
+            matrix_dimensions[file] = "Invalid"
+
+    # Let's show off all the available matrix files with dimensions
     print("\nAvailable Matrix Files:")
     for idx, filename in enumerate(matrix_files, 1):
-        print(f"{idx}. {filename}")
+        dimensions = matrix_dimensions[filename]
+        print(f"{idx}. {filename} (Dimensions: {dimensions})")
 
-    # Collect user input for matrix selection
+    # ask the user to pick two matrices 
     try:
         first_choice = int(input("\nSelect the first matrix (enter number): "))
         second_choice = int(input("Select the second matrix (enter number): "))
 
+        # Make sure the user isn't messing with us
         if not (1 <= first_choice <= len(matrix_files)) or not (1 <= second_choice <= len(matrix_files)):
             raise ValueError("Invalid selection. Please select valid matrix numbers.")
 
@@ -34,14 +45,14 @@ def perform_sparse_matrix_operations():
         print(f"Error: {error}")
         sys.exit(1)
 
-    # Construct full file paths
+    # Getting the full paths of the chosen files 
     matrix_path_1 = os.path.join(input_directory, matrix_files[first_choice - 1])
     matrix_path_2 = os.path.join(input_directory, matrix_files[second_choice - 1])
 
-    # Get the desired operation
+    # Ask what kinda math magic the user wants to do
     operation = input("\nChoose an operation (Add, Subtract, Multiply): ").strip().lower()
 
-    # Load matrices and handle errors
+    # Load up the matrices 
     try:
         print("\nLoading selected matrices...")
         matrix_1 = SparseMatrix(file_path=matrix_path_1)
@@ -53,11 +64,11 @@ def perform_sparse_matrix_operations():
         print(f"Unexpected error: {error}")
         sys.exit(1)
 
-    # Display matrix dimensions
+    # Flexing the matrix dimensions
     print(f"\nMatrix 1 Dimensions: {matrix_1.get_dimensions()}")
     print(f"Matrix 2 Dimensions: {matrix_2.get_dimensions()}")
 
-    # Validate operation compatibility
+    # Quick check: Are these matrices even compatible for the operation?
     dims_1, dims_2 = matrix_1.get_dimensions(), matrix_2.get_dimensions()
 
     if operation in ['add', 'subtract'] and dims_1 != dims_2:
@@ -68,7 +79,7 @@ def perform_sparse_matrix_operations():
         print("Error: Matrix multiplication requires matching inner dimensions.")
         sys.exit(1)
 
-    # Perform and display the operation result
+    # Time to do the math
     try:
         if operation == 'add':
             result = matrix_1.add(matrix_2)
@@ -80,6 +91,7 @@ def perform_sparse_matrix_operations():
             print("Error: Unsupported operation.")
             sys.exit(1)
 
+        # Boom! Here's your matrix
         print("\nResulting Matrix:")
         result.display()
 
